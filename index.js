@@ -141,7 +141,9 @@ function expressCache(opts = {}) {
 		},
 		onCacheMiss: () => {},
 		onCacheServed: () => {},
-		onCacheStored: () => {}
+		onCacheStored: () => {},
+		enableHashKeys: true,
+		namespace: "c"
 	};
 
 	const options = {
@@ -149,11 +151,11 @@ function expressCache(opts = {}) {
 		...opts,
 	};
 
-	const { dependsOn, timeOut, onTimeout, onCacheMiss, onCacheServed, onCacheStored } = options;
+	const { dependsOn, timeOut, onTimeout, onCacheMiss, onCacheServed, onCacheStored, enableHashKeys, namespace } = options;
 
 	return function (req, res, next) {
 		const cacheUrl = req.originalUrl || req.url;
-		const cacheKey = "c_" + hashString(cacheUrl);
+		const cacheKey = namespace + "_" + enableHashKeys ? hashString(cacheUrl) : cacheUrl;
 		const depArrayValues = dependsOn();
 
 		const cachedResponse = cache.get(cacheKey, depArrayValues);
@@ -206,7 +208,7 @@ function expressCache(opts = {}) {
 				cache.set(cacheKey, {
 					body: body,
 					headers: JSON.stringify(res.getHeaders()),
-					statusCode: res.statusCode
+					statusCode: body.status || res.statusCode
 				}, timeOut, onTimeout, depArrayValues);
 				onCacheStored(cacheUrl);
 				originalJson.call(this, body);
